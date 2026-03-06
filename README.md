@@ -1,4 +1,4 @@
-# switchyards-receipt-fetcher
+# Switchyards Receipt Fetcher
 
 Automates monthly receipt collection from Switchyards and emails it to your boss.
 
