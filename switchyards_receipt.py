@@ -1,3 +1,4 @@
+import argparse
 import base64
 import logging
 import os
@@ -5,6 +6,7 @@ import re
 import tempfile
 import time
 from datetime import datetime
+from pathlib import Path
 from email import encoders
 from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
@@ -138,8 +140,8 @@ def get_pdf_path(magic_link: str, month_year: str) -> str:
 
         download = download_info.value
 
-        tmp_dir = tempfile.mkdtemp()
-        pdf_path = os.path.join(tmp_dir, f"{os.getenv("RECEIPT_NAME")} - {month_year}.pdf")
+        out_dir = tempfile.mkdtemp()
+        pdf_path = os.path.join(out_dir, f"{os.getenv("RECEIPT_NAME")} - {month_year}.pdf")
         download.save_as(pdf_path)
 
         logging.info(f"Receipt downloaded: {pdf_path}")
@@ -195,6 +197,10 @@ def send_email(service, pdf_path: str, month_year: str):
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--download-only", action="store_true", help="Download receipt without emailing it")
+    args = parser.parse_args()
+
     validate_env()
     month_year = datetime.now().strftime("%B %Y")
     logging.info(f"***********************************************")
@@ -213,6 +219,14 @@ def main():
         raise RuntimeError("Timed out waiting for magic link email. Check your inbox manually.")
 
     pdf_path = get_pdf_path(magic_link, month_year)
+
+    if args.download_only:
+        receipts_dir = Path("receipts")
+        receipts_dir.mkdir(exist_ok=True)
+        destination = receipts_dir / Path(pdf_path).name
+        Path(pdf_path).rename(destination)
+        logging.info(f"Receipt saved to {destination}")
+        return
 
     logging.info(f"Sending receipt to {os.getenv("BOSS_EMAIL")}")
     send_email(gmail, pdf_path, month_year)

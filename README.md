@@ -9,6 +9,9 @@ Automates monthly receipt collection from Switchyards and emails it to your boss
 1. Uses Playwright to log in, find the latest invoice, and download the PDF receipt
 1. Emails the PDF to a recipient via Gmail
 
+I'm personally running this on my local k3s schedule with a Kubernetes CronJob, but you can also just run it
+occasionally on your local machines.
+
 ## Setup
 
 ### Prerequisites
@@ -27,28 +30,33 @@ uv run playwright install chromium
 
 ### Google OAuth
 
-On first run, a browser window will open for you to authenticate with Google. 
+On first run, a browser window will open for you to authenticate with Google.
 A `google_token.json` file will be created to store the token for future runs.
 
 ### Environment variables
 
-Create a `.env` file:
-
+Create a `.env` file
 ```bash
 cp .env.example .env
 ```
 
 ## Running
 
+Send the receipt via email
 ```bash
 source .env
-uv run python switchyards_receipt.py
+uv run switchyards_receipt.py
+```
+
+Download only (saves to `./receipts/`)
+```bash
+source .env
+uv run switchyards_receipt.py --download-only
 ```
 
 ## Scheduling (cron)
 
-To run on the 1st of every month:
-
+To run on the 15th of every month
 ```
-0 9 1 * * cd /path/to/switchyards-receipt-fetcher && source .env && uv run python switchyards_receipt.py
+0 0 15 * * cd /path/to/switchyards-receipt-fetcher && source .env && uv run python switchyards_receipt.py
 ```
