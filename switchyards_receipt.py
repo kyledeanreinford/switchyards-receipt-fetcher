@@ -66,15 +66,15 @@ def trigger_login_email(email: str):
         context = browser.new_context()
         page = context.new_page()
 
-        logging.info(f"Navigating to member hub")
-        page.goto("https://switchyards.com/manage-account")
+        logging.info(f"Navigating to manage membership")
+        page.goto("https://www.switchyards.com/manage-membership")
 
-        page.get_by_role("link", name="Access payment details.").wait_for()
+        payment_link = page.get_by_role("link", name="Update payment details")
+        payment_link.wait_for()
+        login_url = payment_link.get_attribute("href")
 
-        with context.expect_page() as login_page_info:
-            page.get_by_role("link", name="Access payment details.").click()
-
-        login_page = login_page_info.value
+        login_page = context.new_page()
+        login_page.goto(login_url)
         logging.debug("Login page opened")
 
         login_page.get_by_label("Email").fill(email)
@@ -199,10 +199,11 @@ def send_email(service, pdf_path: str, month_year: str):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--download-only", action="store_true", help="Download receipt without emailing it")
+    parser.add_argument("--month", help='Override the month label, e.g. "May 2026" (default: current month)')
     args = parser.parse_args()
 
     validate_env()
-    month_year = datetime.now().strftime("%B %Y")
+    month_year = args.month or datetime.now().strftime("%B %Y")
     logging.info(f"***********************************************")
     logging.info(f"Switchyards Receipt Automation — {month_year}")
     logging.info(f"***********************************************")
